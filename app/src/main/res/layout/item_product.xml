@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="6dp"
     app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardElevation="4dp">
 
     <LinearLayout
@@ -16,14 +18,13 @@
             android:id="@+id/imgProduct"
             android:layout_width="match_parent"
             android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_foreground"/>
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/txtTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Product Name"
+            android:textColor="?android:attr/textColorPrimary"
             android:textStyle="bold"
             android:maxLines="2"
             android:layout_marginTop="6dp"/>
@@ -32,7 +33,6 @@
             android:id="@+id/txtPrice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="₹999"
             android:textColor="#B12704"
             android:textStyle="bold"
             android:textSize="16sp"
@@ -42,10 +42,9 @@
             android:id="@+id/btnAddCart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add to Cart"
+            android:text="View Product"
             android:backgroundTint="#FFD814"
             android:textColor="#000000"
             android:layout_marginTop="6dp"/>
-
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

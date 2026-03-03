@@ -4,17 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="?android:attr/colorBackground">
 
-    <!-- ================= TOP BAR ================= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
         android:padding="12dp"
         android:orientation="vertical">
 
-        <!-- 🔍 Search Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -28,34 +25,35 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_search"
-                android:layout_marginStart="4dp"
-                app:tint="#555555" />
+                android:layout_marginStart="4dp" />
 
             <EditText
                 android:id="@+id/searchEditText"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:hint="Search or ask a question"
+                android:hint="Search products"
                 android:background="@null"
                 android:paddingStart="10dp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="?android:attr/textColorSecondary"
                 android:textSize="14sp"
-                android:gravity="center_vertical"
                 android:inputType="text" />
 
             <ImageView
+                android:id="@+id/imgCamera"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_camera"
+                android:src="@android:drawable/ic_menu_camera"
                 android:layout_marginEnd="8dp" />
 
             <ImageView
+                android:id="@+id/imgMic"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:src="@drawable/ic_mic" />
+                android:src="@android:drawable/ic_btn_speak_now" />
         </LinearLayout>
 
-        <!-- 👋 Greeting + Icons Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -68,27 +66,28 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Hello, User"
-                android:textSize="16sp"
+                android:text="ShopEasy"
+                android:textSize="18sp"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold" />
 
+            <ImageView
+                android:id="@+id/btnLogout"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginEnd="12dp"
+                android:src="@android:drawable/ic_lock_power_off" />
 
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="12dp">
 
-
-
                 <ImageView
                     android:id="@+id/notificationButton"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
-                    android:src="@drawable/ic_bell"
-                    android:padding="2dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
+                    android:src="@android:drawable/ic_popup_reminder" />
 
                 <TextView
                     android:id="@+id/tvNotificationCount"
@@ -97,16 +96,12 @@
                     android:layout_gravity="end|top"
                     android:background="@drawable/badge_bg"
                     android:gravity="center"
-                    android:text="0"
                     android:textColor="#FFFFFF"
                     android:textSize="9sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
-
-
             </FrameLayout>
 
-            <!-- 🛒 CART WITH BADGE -->
             <FrameLayout
                 android:id="@+id/cartContainer"
                 android:layout_width="wrap_content"
@@ -114,12 +109,10 @@
                 android:layout_marginEnd="12dp">
 
                 <ImageView
-                    android:id="@+id/imgCart"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:src="@drawable/ic_menu_cart" />
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@android:drawable/ic_menu_gallery" />
 
-                <!-- 🔴 Badge -->
                 <TextView
                     android:id="@+id/tvCartCount"
                     android:layout_width="16dp"
@@ -127,36 +120,22 @@
                     android:layout_gravity="end|top"
                     android:background="@drawable/badge_bg"
                     android:gravity="center"
-                    android:text="0"
                     android:textColor="#FFFFFF"
                     android:textSize="10sp" />
             </FrameLayout>
 
             <ImageView
                 android:id="@+id/logoOrderHistory"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_order_logo"
-                android:layout_marginEnd="12dp"
-                android:contentDescription="Order History"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@android:drawable/ic_menu_recent_history" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="EN 🇮🇳"
-                android:textSize="16sp" />
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- ================= PRODUCT LIST ================= -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerProducts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="8dp" />
-
 </LinearLayout>

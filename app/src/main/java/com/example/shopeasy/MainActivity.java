@@ -1,55 +1,54 @@
 package com.example.shopeasy;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 import android.widget.ImageView;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
-import android.os.Build;
-import android.Manifest;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer; // For the Observer interface
-import java.util.List;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.widget.Toast;
-
+import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
     RecyclerView recyclerProducts;
     ProductAdapter productAdapter;
     List<Product> productList;
-
     EditText searchEditText;
-
-    // 🔴 Badges and Containers
     FrameLayout cartContainer;
-    TextView tvCartCount;
-    TextView tvNotificationCount;
-    ImageView notificationButton;
-
-    ImageView logoOrderHistory;
+    TextView tvCartCount, tvNotificationCount;
+    ImageView notificationButton, logoOrderHistory, imgCamera, imgMic, btnLogout;
+    SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
-        // ================== INIT VIEWS ==================
+        checkNotificationPermission();
+
         recyclerProducts = findViewById(R.id.recyclerProducts);
         cartContainer = findViewById(R.id.cartContainer);
         tvCartCount = findViewById(R.id.tvCartCount);
@@ -57,59 +56,68 @@ public class MainActivity extends AppCompatActivity {
         notificationButton = findViewById(R.id.notificationButton);
         logoOrderHistory = findViewById(R.id.logoOrderHistory);
         searchEditText = findViewById(R.id.searchEditText);
+        imgCamera = findViewById(R.id.imgCamera);
+        imgMic = findViewById(R.id.imgMic);
+        btnLogout = findViewById(R.id.btnLogout);
 
         recyclerProducts.setLayoutManager(new LinearLayoutManager(this));
 
-        // ================== SEARCH FILTER LOGIC ==================
-        // This listens to every character typed in the search bar
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filter(s.toString()); // ✅ Call the filter method
+                filter(s.toString());
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
 
-        // ================== REAL-TIME OBSERVERS (CO4) ==================
-        // This listens to the database and updates the red badge INSTANTLY
-        AppDatabase.getInstance(this).notificationDao().getAllNotificationsLive()
-                .observe(this, new Observer<List<NotificationEntity>>() {
-                    @Override
-                    public void onChanged(List<NotificationEntity> notifications) {
-                        if (notifications != null && !notifications.isEmpty()) {
-                            tvNotificationCount.setText(String.valueOf(notifications.size()));
-                            tvNotificationCount.setVisibility(android.view.View.VISIBLE);
-                        } else {
-                            tvNotificationCount.setVisibility(android.view.View.GONE);
-                        }
+        AppDatabase.getInstance(this).notificationDao()
+                .getNotificationsByUserLive(sessionManager.getUserEmail())
+                .observe(this, notifications -> {
+                    if (notifications != null && !notifications.isEmpty()) {
+                        tvNotificationCount.setText(String.valueOf(notifications.size()));
+                        tvNotificationCount.setVisibility(android.view.View.VISIBLE);
+                    } else {
+                        tvNotificationCount.setVisibility(android.view.View.GONE);
                     }
                 });
 
-        // ================== CLICK LISTENERS ==================
-        cartContainer.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, CartActivity.class))
-        );
+        cartContainer.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, CartActivity.class)));
+        notificationButton.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, NotificationActivity.class)));
+        logoOrderHistory.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, OrderHistoryActivity.class)));
 
-        notificationButton.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, NotificationActivity.class));
-            // Trigger the permission check/alarm when they check notifications
-            checkAndScheduleNotifications();
+        btnLogout.setOnClickListener(v -> {
+            sessionManager.logoutUser();
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
         });
 
-        logoOrderHistory.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, OrderHistoryActivity.class);
-            startActivity(intent);
+        imgCamera.setOnClickListener(v -> {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        // ================== PRODUCT LIST (CO3) ==================
+        imgMic.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Microphone not available", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         loadProducts();
         productAdapter = new ProductAdapter(this, productList);
         recyclerProducts.setAdapter(productAdapter);
+
+        sendAppLifecycleNotification("Welcome Back!", "Check out the latest deals today.");
     }
 
     private void loadProducts() {
@@ -124,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
     private void filter(String text) {
         List<Product> filteredList = new ArrayList<>();
         for (Product item : productList) {
-            // Check if name contains the search text (case-insensitive)
             if (item.name.toLowerCase().contains(text.toLowerCase())) {
                 filteredList.add(item);
             }
@@ -132,59 +139,35 @@ public class MainActivity extends AppCompatActivity {
         productAdapter.filterList(filteredList);
     }
 
-    // ================== NOTIFICATION LOGIC (CO1 & CO5) ==================
-    private void checkAndScheduleNotifications() {
+    private void checkNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    == PackageManager.PERMISSION_GRANTED) {
-                scheduleNotifications();
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
             }
-        } else {
-            scheduleNotifications();
         }
     }
 
-    private void scheduleNotifications() {
+    private void sendAppLifecycleNotification(String title, String msg) {
         Intent intent = new Intent(this, NotificationReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null) {
-            long triggerTime = System.currentTimeMillis() + (5 * 1000); // 5-second test trigger
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
-            } else {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
-            }
-            Toast.makeText(this, "Deals starting in 5 seconds!", Toast.LENGTH_SHORT).show();
-        }
+        intent.putExtra("TITLE", title);
+        intent.putExtra("MESSAGE", msg);
+        sendBroadcast(intent);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 101 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            scheduleNotifications();
-        }
-    }
-
-    // ================== LIFECYCLE REFRESH ==================
     @Override
     protected void onResume() {
         super.onResume();
         updateCartBadge();
-        // Note: Notification badge is handled by the LiveData Observer in onCreate!
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        sendAppLifecycleNotification("We miss you!", "Come back soon for more shopping deals.");
     }
 
     private void updateCartBadge() {
-        int count = AppDatabase.getInstance(this).cartDao().getAll().size();
+        int count = AppDatabase.getInstance(this).cartDao().getCartByUser(sessionManager.getUserEmail()).size();
         tvCartCount.setText(String.valueOf(count));
         tvCartCount.setVisibility(count == 0 ? android.view.View.GONE : android.view.View.VISIBLE);
     }

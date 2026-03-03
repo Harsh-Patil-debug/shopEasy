@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp">
 
@@ -11,15 +12,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:background="#FFFFFF">
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/tvNotifTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Offer Title"
-            android:textColor="#FFD700"
+            android:textColor="#FFD814"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -28,9 +27,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Get 20% off on your first order!"
-            android:textColor="#333333"
-            android:textSize="14sp" />
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="14sp"/>
 
         <TextView
             android:id="@+id/tvNotifTime"
@@ -38,8 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
-            android:text="10:30 AM"
-            android:textColor="#888888"
-            android:textSize="12sp" />
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
-
     private List<NotificationEntity> notificationList;
 
     public NotificationAdapter(List<NotificationEntity> notificationList) {
@@ -19,16 +18,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @NonNull
     @Override
     public NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // We use a custom layout for each notification card
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_notification, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_notification, parent, false);
         return new NotificationViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
         NotificationEntity notification = notificationList.get(position);
-
         holder.tvTitle.setText(notification.title);
         holder.tvMessage.setText(notification.message);
         holder.tvTime.setText(notification.time);
