@@ -33,31 +33,29 @@ public class LoginActivity extends AppCompatActivity {
             String pass = etPassword.getText().toString().trim();
 
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(pass)) {
-                Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Empty fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             UserDao dao = AppDatabase.getInstance(this).userDao();
-            UserEntity existingUser = dao.getUserByEmail(email);
+            UserEntity user = dao.getUserByEmail(email);
 
-            if (existingUser == null) {
+            if (user == null) {
                 UserEntity newUser = new UserEntity();
                 newUser.email = email;
                 newUser.password = pass;
                 dao.insertUser(newUser);
-                Toast.makeText(this, "New account created", Toast.LENGTH_SHORT).show();
-                proceed(email);
+                Toast.makeText(this, "New Account Created", Toast.LENGTH_SHORT).show();
+                loginAndProceed(email);
+            } else if (user.password.equals(pass)) {
+                loginAndProceed(email);
             } else {
-                if (existingUser.password.equals(pass)) {
-                    proceed(email);
-                } else {
-                    Toast.makeText(this, "Incorrect password", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(this, "Invalid Password", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void proceed(String email) {
+    private void loginAndProceed(String email) {
         sessionManager.loginUser(email);
         startActivity(new Intent(this, MainActivity.class));
         finish();

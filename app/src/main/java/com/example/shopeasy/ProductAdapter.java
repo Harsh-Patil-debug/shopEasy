@@ -20,8 +20,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         this.list = list;
     }
 
-    @NonNull
-    @Override
+    public void filterList(List<Product> filteredList) {
+        this.list = filteredList;
+        notifyDataSetChanged();
+    }
+
+    @NonNull @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.item_product, parent, false));
     }
@@ -43,8 +47,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         });
     }
 
-    @Override
-    public int getItemCount() { return list.size(); }
+    @Override public int getItemCount() { return list.size(); }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, price;

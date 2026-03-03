@@ -20,8 +20,7 @@ public class GroupedOrderAdapter extends RecyclerView.Adapter<GroupedOrderAdapte
         this.context = context;
     }
 
-    @NonNull
-    @Override
+    @NonNull @Override
     public GroupViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new GroupViewHolder(LayoutInflater.from(context).inflate(R.layout.order_group_item, parent, false));
     }
@@ -33,8 +32,8 @@ public class GroupedOrderAdapter extends RecyclerView.Adapter<GroupedOrderAdapte
 
         holder.btnDeleteGroup.setOnClickListener(v -> {
             new AlertDialog.Builder(context)
-                    .setTitle("Delete Order")
-                    .setMessage("Remove this order from history?")
+                    .setTitle("Confirm Deletion")
+                    .setMessage("Do you want to remove this order group?")
                     .setPositiveButton("Delete", (dialog, which) -> {
                         AppDatabase.getInstance(context).orderDao().deleteOrderGroup(group.orderGroupId);
                     })
@@ -43,8 +42,7 @@ public class GroupedOrderAdapter extends RecyclerView.Adapter<GroupedOrderAdapte
         });
     }
 
-    @Override
-    public int getItemCount() { return groupList.size(); }
+    @Override public int getItemCount() { return groupList.size(); }
 
     public static class GroupViewHolder extends RecyclerView.ViewHolder {
         TextView tvOrderId;
