@@ -11,13 +11,13 @@ public interface OrderDao {
     @Insert
     void insert(OrderEntity order);
 
-    // This query MUST filter by userEmail and sort by the Group ID
     @Query("SELECT * FROM orders WHERE userEmail = :email ORDER BY orderGroupId DESC")
     LiveData<List<OrderEntity>> getOrdersByUserLive(String email);
 
     @Query("DELETE FROM orders WHERE orderGroupId = :orderGroupId")
     void deleteOrderGroup(long orderGroupId);
 
+    // Fixed: Now clears history specifically for the logged-in user
     @Query("DELETE FROM orders WHERE userEmail = :email")
     void deleteAllOrdersByUser(String email);
 }
