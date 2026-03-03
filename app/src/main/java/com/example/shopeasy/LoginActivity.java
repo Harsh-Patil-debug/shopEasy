@@ -9,8 +9,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
-    SessionManager sessionManager;
     EditText etEmail, etPassword;
+    SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,7 +22,6 @@ public class LoginActivity extends AppCompatActivity {
             finish();
             return;
         }
-
         setContentView(R.layout.activity_login);
 
         etEmail = findViewById(R.id.etEmail);
@@ -31,25 +30,36 @@ public class LoginActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
+            String pass = etPassword.getText().toString().trim();
 
-            if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show();
+            if (TextUtils.isEmpty(email) || TextUtils.isEmpty(pass)) {
+                Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            UserEntity user = AppDatabase.getInstance(this).userDao().login(email, password);
-            if (user == null) {
+            UserDao dao = AppDatabase.getInstance(this).userDao();
+            UserEntity existingUser = dao.getUserByEmail(email);
+
+            if (existingUser == null) {
                 UserEntity newUser = new UserEntity();
                 newUser.email = email;
-                newUser.password = password;
-                AppDatabase.getInstance(this).userDao().insertUser(newUser);
+                newUser.password = pass;
+                dao.insertUser(newUser);
                 Toast.makeText(this, "New account created", Toast.LENGTH_SHORT).show();
+                proceed(email);
+            } else {
+                if (existingUser.password.equals(pass)) {
+                    proceed(email);
+                } else {
+                    Toast.makeText(this, "Incorrect password", Toast.LENGTH_SHORT).show();
+                }
             }
-
-            sessionManager.loginUser(email);
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
         });
+    }
+
+    private void proceed(String email) {
+        sessionManager.loginUser(email);
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 }

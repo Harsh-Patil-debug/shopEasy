@@ -11,59 +11,49 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
-public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
-    private List<Product> productList;
-    private final Context context;
+public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
+    private List<Product> list;
+    private Context context;
 
-    public ProductAdapter(Context context, List<Product> productList) {
+    public ProductAdapter(Context context, List<Product> list) {
         this.context = context;
-        this.productList = productList;
-    }
-
-    public void filterList(List<Product> filteredList) {
-        this.productList = filteredList;
-        notifyDataSetChanged();
+        this.list = list;
     }
 
     @NonNull
     @Override
-    public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_product, parent, false);
-        return new ProductViewHolder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.item_product, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
-        Product product = productList.get(position);
-        holder.name.setText(product.name);
-        holder.price.setText("₹" + product.price);
-        holder.image.setImageResource(product.imageResId);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Product p = list.get(position);
+        holder.title.setText(p.name);
+        holder.price.setText("₹" + p.price);
+        holder.img.setImageResource(p.imageResId);
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, BuyActivity.class);
-            intent.putExtra("name", product.name);
-            intent.putExtra("price", product.price);
-            intent.putExtra("description", product.description);
-            intent.putExtra("image", product.imageResId);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra("name", p.name);
+            intent.putExtra("price", p.price);
+            intent.putExtra("description", p.description);
+            intent.putExtra("image", p.imageResId);
             context.startActivity(intent);
         });
     }
 
     @Override
-    public int getItemCount() {
-        return productList == null ? 0 : productList.size();
-    }
+    public int getItemCount() { return list.size(); }
 
-    static class ProductViewHolder extends RecyclerView.ViewHolder {
-        TextView name, price;
-        ImageView image;
-
-        public ProductViewHolder(@NonNull View itemView) {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView title, price;
+        ImageView img;
+        public ViewHolder(View itemView) {
             super(itemView);
-            name = itemView.findViewById(R.id.txtTitle);
+            title = itemView.findViewById(R.id.txtTitle);
             price = itemView.findViewById(R.id.txtPrice);
-            image = itemView.findViewById(R.id.imgProduct);
+            img = itemView.findViewById(R.id.imgProduct);
         }
     }
 }

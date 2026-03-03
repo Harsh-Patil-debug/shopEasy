@@ -1,5 +1,6 @@
 package com.example.shopeasy;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
@@ -23,8 +23,7 @@ public class GroupedOrderAdapter extends RecyclerView.Adapter<GroupedOrderAdapte
     @NonNull
     @Override
     public GroupViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.order_group_item, parent, false);
-        return new GroupViewHolder(view);
+        return new GroupViewHolder(LayoutInflater.from(context).inflate(R.layout.order_group_item, parent, false));
     }
 
     @Override
@@ -32,36 +31,27 @@ public class GroupedOrderAdapter extends RecyclerView.Adapter<GroupedOrderAdapte
         OrderGroup group = groupList.get(position);
         holder.tvOrderId.setText("Order ID: " + group.orderGroupId);
 
-        int grandTotal = 0;
-        for (OrderEntity item : group.items) {
-            grandTotal += (item.price * item.quantity);
-        }
-        holder.tvGroupTotal.setText("Total: ₹" + grandTotal);
-
-        OrderAdapter childAdapter = new OrderAdapter(group.items);
-        holder.childRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-        holder.childRecyclerView.setAdapter(childAdapter);
-
         holder.btnDeleteGroup.setOnClickListener(v -> {
-            AppDatabase.getInstance(context).orderDao().deleteOrderGroup(group.orderGroupId);
+            new AlertDialog.Builder(context)
+                    .setTitle("Delete Order")
+                    .setMessage("Remove this order from history?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        AppDatabase.getInstance(context).orderDao().deleteOrderGroup(group.orderGroupId);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
     }
 
     @Override
-    public int getItemCount() {
-        return groupList.size();
-    }
+    public int getItemCount() { return groupList.size(); }
 
     public static class GroupViewHolder extends RecyclerView.ViewHolder {
-        TextView tvOrderId, tvGroupTotal;
-        RecyclerView childRecyclerView;
+        TextView tvOrderId;
         ImageButton btnDeleteGroup;
-
-        public GroupViewHolder(@NonNull View itemView) {
+        public GroupViewHolder(View itemView) {
             super(itemView);
             tvOrderId = itemView.findViewById(R.id.tvOrderId);
-            tvGroupTotal = itemView.findViewById(R.id.tvGroupTotal);
-            childRecyclerView = itemView.findViewById(R.id.childRecyclerView);
             btnDeleteGroup = itemView.findViewById(R.id.btnDeleteGroup);
         }
     }
