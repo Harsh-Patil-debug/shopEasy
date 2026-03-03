@@ -1,6 +1,9 @@
 package com.example.shopeasy;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
@@ -8,9 +11,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
@@ -27,24 +34,39 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         session = new SessionManager(this);
+
+        if (!session.isLoggedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
+        // 1. Initialize Views
         tvCartCount = findViewById(R.id.tvCartCount);
         tvNotificationCount = findViewById(R.id.tvNotificationCount);
+        recyclerProducts = findViewById(R.id.recyclerProducts);
+        EditText searchBar = findViewById(R.id.searchEditText);
 
-        // Fixed: Microphone Button [cite: 451-519]
-        findViewById(R.id.imgMic).setOnClickListener(v -> {
-            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            try {
-                startActivity(intent);
-            } catch (Exception e) {
-                Toast.makeText(this, "Voice search not supported on this device", Toast.LENGTH_SHORT).show();
-            }
+        // 2. Setup Navigation Listeners (Fixed)
+        findViewById(R.id.cartContainer).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
+        findViewById(R.id.notificationButton).setOnClickListener(v -> startActivity(new Intent(this, NotificationActivity.class)));
+        findViewById(R.id.logoOrderHistory).setOnClickListener(v -> startActivity(new Intent(this, OrderHistoryActivity.class)));
+        findViewById(R.id.btnLogout).setOnClickListener(v -> {
+            session.logoutUser();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
         });
 
-        // Search Bar TextWatcher [cite: 502-518]
-        EditText searchBar = findViewById(R.id.searchEditText);
+        // 3. Hardware Integration (Fixed) [cite: 79]
+        findViewById(R.id.imgCamera).setOnClickListener(v -> startActivity(new Intent(MediaStore.ACTION_IMAGE_CAPTURE)));
+        findViewById(R.id.imgMic).setOnClickListener(v -> startVoiceSearch());
+
+        // 4. Notification Permission (Fixed for Android 13+)
+        checkNotificationPermission();
+
+        // 5. Search Logic
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -53,7 +75,13 @@ public class MainActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Real-time Notification Observer [cite: 521-535]
+        // 6. Product List Init
+        loadProducts();
+        recyclerProducts.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new ProductAdapter(this, productList);
+        recyclerProducts.setAdapter(adapter);
+
+        // 7. Notification Badge Observer [cite: 521-535]
         AppDatabase.getInstance(this).notificationDao()
                 .getNotificationsByUserLive(session.getUserEmail())
                 .observe(this, list -> {
@@ -61,24 +89,35 @@ public class MainActivity extends AppCompatActivity {
                     tvNotificationCount.setText(String.valueOf(count));
                     tvNotificationCount.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
                 });
+    }
 
-        loadProducts(); // [cite: 568-574]
-        recyclerProducts = findViewById(R.id.recyclerProducts);
-        recyclerProducts.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ProductAdapter(this, productList);
-        recyclerProducts.setAdapter(adapter);
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
+    private void startVoiceSearch() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Voice recognition not available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        updateCartBadge(); // [cite: 646-649]
+        updateCartBadge();
     }
 
     private void updateCartBadge() {
         int count = AppDatabase.getInstance(this).cartDao().getCartByUser(session.getUserEmail()).size();
         tvCartCount.setText(String.valueOf(count));
-        // Fixed: Only show badge if there are items [cite: 653-660]
         tvCartCount.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
     }
 
@@ -87,15 +126,15 @@ public class MainActivity extends AppCompatActivity {
         for (Product p : productList) {
             if (p.name.toLowerCase().contains(text.toLowerCase())) filtered.add(p);
         }
-        adapter.filterList(filtered); // [cite: 586]
+        adapter.filterList(filtered);
     }
 
     private void loadProducts() {
         productList = new ArrayList<>();
-        productList.add(new Product("Apple iPhone 14", 79999, "6.1-inch Super Retina XDR display...", R.drawable.ic_phone));
-        productList.add(new Product("Samsung Galaxy S23", 69999, "Dynamic AMOLED display...", R.drawable.s));
-        productList.add(new Product("Sony Headphones", 4999, "Noise-cancelling headphones...", R.drawable.headphone));
-        productList.add(new Product("Amazon Echo Dot", 3499, "Smart speaker with Alexa...", R.drawable.echo));
-        productList.add(new Product("Apple Watch Series 9", 39999, "Always-On Retina display...", R.drawable.apple_wtch));
+        productList.add(new Product("Apple iPhone 14", 79999, "6.1-inch display", R.drawable.ic_phone));
+        productList.add(new Product("Samsung Galaxy S23", 69999, "AMOLED display", R.drawable.s));
+        productList.add(new Product("Sony Headphones", 4999, "Noise-cancelling", R.drawable.headphone));
+        productList.add(new Product("Amazon Echo Dot", 3499, "Smart speaker", R.drawable.echo));
+        productList.add(new Product("Apple Watch Series 9", 39999, "Retina display", R.drawable.apple_wtch));
     }
 }
