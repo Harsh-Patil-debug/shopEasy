@@ -11,7 +11,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -43,30 +42,30 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // 1. Initialize Views
         tvCartCount = findViewById(R.id.tvCartCount);
         tvNotificationCount = findViewById(R.id.tvNotificationCount);
         recyclerProducts = findViewById(R.id.recyclerProducts);
         EditText searchBar = findViewById(R.id.searchEditText);
 
-        // 2. Setup Navigation Listeners (Fixed)
+        // Functional Navigation Listeners [cite: 541-558]
         findViewById(R.id.cartContainer).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
         findViewById(R.id.notificationButton).setOnClickListener(v -> startActivity(new Intent(this, NotificationActivity.class)));
         findViewById(R.id.logoOrderHistory).setOnClickListener(v -> startActivity(new Intent(this, OrderHistoryActivity.class)));
+
+        // Logout with Notification
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
+            sendNotification("Session Ended", "You have successfully logged out of ShopEasy.");
             session.logoutUser();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
 
-        // 3. Hardware Integration (Fixed) [cite: 79]
+        // Fixed Hardware Integration
         findViewById(R.id.imgCamera).setOnClickListener(v -> startActivity(new Intent(MediaStore.ACTION_IMAGE_CAPTURE)));
         findViewById(R.id.imgMic).setOnClickListener(v -> startVoiceSearch());
 
-        // 4. Notification Permission (Fixed for Android 13+)
         checkNotificationPermission();
 
-        // 5. Search Logic
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -75,13 +74,12 @@ public class MainActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // 6. Product List Init
-        loadProducts();
+        loadProducts(); // Restored all your original products
         recyclerProducts.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ProductAdapter(this, productList);
         recyclerProducts.setAdapter(adapter);
 
-        // 7. Notification Badge Observer [cite: 521-535]
+        // Notification Badge Observer [cite: 521-535]
         AppDatabase.getInstance(this).notificationDao()
                 .getNotificationsByUserLive(session.getUserEmail())
                 .observe(this, list -> {
@@ -89,6 +87,11 @@ public class MainActivity extends AppCompatActivity {
                     tvNotificationCount.setText(String.valueOf(count));
                     tvNotificationCount.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
                 });
+
+        // App Entry Notification
+        if (savedInstanceState == null) {
+            sendNotification("App Entered", "Welcome back! Start exploring the best deals today.");
+        }
     }
 
     private void checkNotificationPermission() {
@@ -136,5 +139,12 @@ public class MainActivity extends AppCompatActivity {
         productList.add(new Product("Sony Headphones", 4999, "Noise-cancelling", R.drawable.headphone));
         productList.add(new Product("Amazon Echo Dot", 3499, "Smart speaker", R.drawable.echo));
         productList.add(new Product("Apple Watch Series 9", 39999, "Retina display", R.drawable.apple_wtch));
+    }
+
+    private void sendNotification(String title, String msg) {
+        Intent intent = new Intent(this, NotificationReceiver.class);
+        intent.putExtra("TITLE", title);
+        intent.putExtra("MESSAGE", msg);
+        sendBroadcast(intent);
     }
 }

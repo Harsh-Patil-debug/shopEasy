@@ -1,6 +1,7 @@
 package com.example.shopeasy;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -42,16 +43,23 @@ public class OrderHistoryActivity extends AppCompatActivity {
         btnClear.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Clear History")
-                    .setMessage("Delete all of your order history?")
+                    .setMessage("This will delete your entire order history. Proceed?")
                     .setPositiveButton("Clear All", (dialog, which) -> {
                         AppDatabase.getInstance(this).orderDao().deleteAllOrdersByUser(session.getUserEmail());
-                        Toast.makeText(this, "History Wiped", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Order History Cleared", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
         });
 
-        findViewById(R.id.btnHome).setOnClickListener(v -> finish());
+        // Fixed Back Button to Home [cite: 1086-1095]
+        ImageButton btnHome = findViewById(R.id.btnHome);
+        btnHome.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private List<OrderGroup> groupOrders(List<OrderEntity> orders) {
