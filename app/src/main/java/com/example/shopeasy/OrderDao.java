@@ -11,6 +11,7 @@ public interface OrderDao {
     @Insert
     void insert(OrderEntity order);
 
+    // This query MUST filter by userEmail and sort by the Group ID
     @Query("SELECT * FROM orders WHERE userEmail = :email ORDER BY orderGroupId DESC")
     LiveData<List<OrderEntity>> getOrdersByUserLive(String email);
 

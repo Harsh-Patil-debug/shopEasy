@@ -17,31 +17,36 @@ public class PaymentActivity extends AppCompatActivity {
         session = new SessionManager(this);
 
         Button pay = findViewById(R.id.btnPay);
-
         pay.setOnClickListener(v -> {
-            String email = session.getUserEmail();
-            List<CartEntity> cart = AppDatabase.getInstance(this).cartDao().getCartByUser(email);
+            String currentUserEmail = session.getUserEmail();
+            AppDatabase db = AppDatabase.getInstance(this);
 
-            if (cart.isEmpty()) {
-                Toast.makeText(this, "Cart is empty", Toast.LENGTH_SHORT).show();
+            // Get the cart items for the specific user [cite: 1113-1114]
+            List<CartEntity> cartItems = db.cartDao().getCartByUser(currentUserEmail);
+
+            if (cartItems.isEmpty()) {
+                Toast.makeText(this, "Your cart is empty", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // Create a single unique ID for this entire purchase [cite: 1116]
             long groupId = System.currentTimeMillis();
 
-            for (CartEntity c : cart) {
+            for (CartEntity item : cartItems) {
                 OrderEntity order = new OrderEntity();
-                order.userEmail = email;
-                order.orderGroupId = groupId;
-                order.name = c.name;
-                order.price = c.price;
-                order.quantity = c.quantity;
-                order.image = c.image;
-                AppDatabase.getInstance(this).orderDao().insert(order);
+                order.userEmail = currentUserEmail; // Tagging the user
+                order.orderGroupId = groupId;       // Grouping items together
+                order.name = item.name;
+                order.price = item.price;
+                order.quantity = item.quantity;
+                order.image = item.image;
+                db.orderDao().insert(order);
             }
 
-            AppDatabase.getInstance(this).cartDao().clearCartByUser(email);
-            Toast.makeText(this, "Payment Successful", Toast.LENGTH_SHORT).show();
+            // Clear ONLY this user's cart after successful purchase [cite: 1123]
+            db.cartDao().clearCartByUser(currentUserEmail);
+
+            Toast.makeText(this, "Payment Successful!", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, OrderHistoryActivity.class));
             finish();
         });
